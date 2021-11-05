@@ -6,12 +6,13 @@ It gives you the ability to get all top 10.000 addresses nicely formatted as .cs
 Theres nothing to do, than just start the *EtherscanCrawler.exe* watch the ConsoleOutput and after it writes "Job done...", you have a fully formatted .csv on you desktop.
 
 It contains: 
--  Rank
+- Rank
 - Address
 - NameTag
 - Balance
 - Percentage
 - TxnCount
+- IsContract
 
 
 Nothing more, nothing less.
