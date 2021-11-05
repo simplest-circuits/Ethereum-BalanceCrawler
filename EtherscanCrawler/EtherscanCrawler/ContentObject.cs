@@ -8,5 +8,7 @@
         public string Balance { get; set; }
         public string Percentage { get; set; }
         public string TxnCount { get; set; }
+
+        public bool IsContract { get; set; }
     }
 }

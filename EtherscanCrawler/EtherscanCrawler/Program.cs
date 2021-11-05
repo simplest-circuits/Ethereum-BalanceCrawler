@@ -28,41 +28,79 @@ namespace EtherscanCrawler
         }
         static void DecomposeContent(string content)
         {
-            var splittedContent = content.Split("<a href='");
-            var listOfContentStrings = new List<string>(splittedContent);
-            var newList = new List<List<string>>();
+            var splitted = content.Split("<tbody>" + 1).ToList();
+            var newcontent = splitted.ElementAt(0);
+            var contentElements = new List<string>();
+            var contentElementsCleaned = new List<string>();
+            var newList = new List<string>();
 
-            foreach (var line in listOfContentStrings.ToList())
+            contentElements = newcontent.Split("<td>").ToList();
+
+            foreach (var line in contentElements.ToList())
             {
-                if (line.StartsWith("/address/") == false)
-                    listOfContentStrings.Remove(line);
+                if (line.StartsWith("\n<!doctype html>"))
+                    contentElements.Remove(line);
                 else
-                {
-                    var s = line.Split("</td>").ToList();
-                    newList.Add(s);
-                }
+                    contentElementsCleaned.Add(line.Replace("</td>", ""));
+
+                line.Replace("<td>", "");
+                line.Replace("</tr><tr>", "");
             }
-            foreach (var item in newList)
+
+            var rowsList = new List<List<string>>();
+            while (contentElementsCleaned.Count > 0)
+            {
+                newList = new List<string>();
+                for (int i = 0; i <= 5; i++)
+                {
+                    newList.Add(contentElementsCleaned[i]);
+                }
+                contentElementsCleaned.RemoveRange(0, 6);
+                rowsList.Add(newList);
+            }
+
+            foreach (var line in rowsList)
             {
                 ContentObject addrObj = new();
-                for (int i = 0; i < item.Count; i++)
+
+                addrObj.Rank = Convert.ToInt32(line[0]);
+
+                if (line[1].Contains("far fa-file-alt"))
                 {
-                    item[0] = item[0].Replace("</a>", "");
-                    item[0] = item[0].Replace("</span>", "");
-                    addrObj.Address = item[0].Replace("</a></span>", "").Remove(0, 53);
-                    addrObj.NameTag = item[1].Replace("<td>", "");
-                    item[2] = item[2].Replace("<td>", "");
-                    if (item[2].Contains("<b>"))
-                    {
-                        item[2] = item[2].Substring(0, item[2].IndexOf("<") + 1).Replace("<", "");
-                        addrObj.Balance = item[2];
-                    }
-                    item[2] = item[2].Replace(" Ether", "");
-                    addrObj.Balance = item[2].Replace(",", "");
-                    addrObj.Percentage = item[3].Replace("%", "").Replace("<td>", "").Replace(".", ",");
-                    addrObj.TxnCount = item[4].Replace("<td>", "").Replace(",", "");
+                    addrObj.IsContract = true;
+                    line[1] = line[1].Remove(0, 186);
+                    line[1] = line[1].Substring(0, line[1].IndexOf("<") + 1);
+                    line[1] = line[1].Replace("<", "");
+                    addrObj.Address = line[1];
                 }
-                addrObj.Rank = _rankCounter++;
+                else
+                {
+                    line[1] = line[1].Remove(0, 62);
+                    line[1] = line[1].Replace("</a>", "");
+                    addrObj.Address = line[1];
+                }
+
+
+                addrObj.NameTag = line[2];
+
+                if (line[3].Contains("<"))
+                {
+                    line[3] = line[3].Substring(0, line[3].IndexOf("<") + 1);
+                    line[3] = line[3].Replace("<", "");
+                }
+                else
+                    line[3] = line[3].Replace(" Ether", "");
+                line[3] = line[3].Replace(",", "");
+                addrObj.Balance = line[3];
+
+                line[4] = line[4].Replace("%", "");
+                line[4] = line[4].Replace(".", ",");
+                addrObj.Percentage = line[4];
+
+                line[5] = line[5].Substring(0, line[5].IndexOf("<") + 1);
+                line[5] = line[5].Replace("<", "");
+                addrObj.TxnCount = line[5].Replace(",", "");
+
                 _addrObjList.Add(addrObj);
             }
         }
